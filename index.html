@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="https://flatironinstitute.github.io/neurosift/neurosift-logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neurosift</title>
+    <script>
+      window.global = window
+    </script>
+    <script type="module" crossorigin src="https://flatironinstitute.github.io/neurosift/assets/index-db334f1a.js"></script>
+    <link rel="stylesheet" href="https://flatironinstitute.github.io/neurosift/assets/index-23c017bc.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Important to do the redirects here rather than in main.tsx, because we don't want to download the entire source bundle!
+      const parseQueryString = (qstr) => {
+        const ret = {}
+        const a = qstr.split('&')
+        for (const s of a) {
+          const ind = s.indexOf('=')
+          if (ind >= 0) {
+            const key = s.slice(0, ind)
+            const val = s.slice(ind + 1)
+            ret[key] = val
+          }
+        }
+        return ret
+      }
+
+      const handleRedirects = () => {
+        // http://localhost:3000/neurosift#/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/082/8f8/0828f847-62e9-443f-8241-3960985ddab3
+        // convert https://flatironinstitute.github.io/neurosift#/nwb?url=https://dandiarchive.s3.amazonaws.com/blobs/082/8f8/0828f847-62e9-443f-8241-3960985ddab3
+        // to https://flatironinstitute.github.io/neurosift?p=/nwb&url=https://dandiarchive.s3.amazonaws.com/blobs/082/8f8/0828f847-62e9-443f-8241-3960985ddab3
+        // note that we need to support case where we have 2 query strings, one before the hash and one after
+
+        const url = window.location.href
+        const indHash = url.indexOf('#/')
+        if (indHash >= 0) {
+          const a1 = url.slice(0, indHash)
+          const a2 = url.slice(indHash + 1)
+          const questionMarkInd1 = a1.indexOf('?')
+          const a1BeforeQ = questionMarkInd1 >= 0 ? a1.slice(0, questionMarkInd1) : a1
+          const qstr1 = questionMarkInd1 >= 0 ? a1.slice(questionMarkInd1 + 1) : ''
+          const query1 = parseQueryString(qstr1)
+          const questionMarkInd2 = a2.indexOf('?')
+          const qstr2 = questionMarkInd2 >= 0 ? a2.slice(questionMarkInd2 + 1) : ''
+          const query2 = parseQueryString(qstr2)
+          const query = { p: (questionMarkInd2 >= 0 ? a2.slice(0, questionMarkInd2) : a2), ...query1, ...query2 }
+          const qstr = Object.keys(query)
+            .map((key) => `${key}=${query[key]}`)
+            .join('&')
+          window.location.href = a1BeforeQ + '?' + qstr
+          return true
+        }
+        return false
+      }
+      handleRedirects()
+    </script>
+    
+  </body>
+</html>
